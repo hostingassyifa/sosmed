@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Website Sederhana dengan Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .auth-container { max-width: 400px; margin: 100px auto; padding: 20px; border: 1px solid #ccc; text-align: center; }
+    .auth-container input { width: 100%; padding: 10px; margin: 8px 0; }
+    .auth-container button { padding: 10px 20px; margin: 10px 5px; background-color: #4CAF50; color: white; border: none; }
+    header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+    nav { background-color: #333; overflow: hidden; }
+    nav a { float: left; color: white; text-align: center; padding: 14px 16px; text-decoration: none; cursor: pointer; }
+    nav a:hover { background-color: #ddd; color: black; }
+    main { padding: 20px; }
+    section { margin-bottom: 40px; display: none; }
+    .gallery img { width: 200px; margin: 10px; border: 2px solid #ccc; }
+    footer { background-color: #f1f1f1; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
+    form input, form textarea { display: block; margin: 10px 0; width: 100%; padding: 8px; }
+    form button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; }
+    .media-wrapper { position: relative; display: inline-block; margin: 10px; }
+    .delete-btn { position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; padding: 4px 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="auth" class="auth-container">
+    <h2 id="auth-title">Login</h2>
+    <input type="text" id="auth-username" placeholder="Username" style="display:none;" />
+    <input type="email" id="auth-email" placeholder="Email" required />
+    <input type="password" id="auth-password" placeholder="Password" required />
+    <div>
+      <button onclick="handleAuth()">Login</button>
+      <button onclick="toggleAuth()">Daftar</button>
+    </div>
+    <p id="auth-message" style="color:red;"></p>
+  </div>
+
+  <div id="main-content" style="display:none">
+    <header>
+      <h1>Selamat Datang di Website Saya</h1>
+      <p id="user-greeting"></p>
+      <p>Website ini memiliki formulir kontak, galeri, video, dan musik</p>
+    </header>
+    <nav>
+      <a href="#galeri">Galeri</a>
+      <a href="#video">Video</a>
+      <a href="#musik">Musik</a>
+      <a href="#kontak">Kontak</a>
+      <a id="user-list-link" href="#pengguna" style="display:none;">Pengguna</a>
+      <a style="float:right; background:red;" onclick="logout()">Logout</a>
+    </nav>
+    <main>
+      <section id="galeri">
+        <h2>Galeri Gambar</h2>
+        <input type="file" accept="image/*" onchange="uploadImage(event)">
+        <div class="gallery" id="gallery-container"></div>
+      </section>
+      <section id="video">
+        <h2>Video</h2>
+        <input type="file" accept="video/*" onchange="uploadVideo(event)" />
+        <div id="video-container"></div>
+      </section>
+      <section id="musik">
+        <h2>Musik</h2>
+        <input type="file" accept="audio/*" onchange="uploadMusic(event)" />
+        <div id="music-container"></div>
+      </section>
+      <section id="kontak">
+        <h2>Formulir Kontak</h2>
+        <form>
+          <label for="nama">Nama:</label>
+          <input type="text" id="nama" name="nama" required />
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required />
+          <label for="pesan">Pesan:</label>
+          <textarea id="pesan" name="pesan" rows="4" required></textarea>
+          <button type="submit">Kirim</button>
+        </form>
+      </section>
+      <section id="pengguna">
+        <h2>Daftar Pengguna</h2>
+        <ul id="user-list"></ul>
+      </section>
+    </main>
+    <footer>
+      &copy; 2025 Website Saya. Semua hak dilindungi.
+    </footer>
+  </div>
+
+  <script>
+    let isLogin = true;
+    function toggleAuth() {
+      isLogin = !isLogin;
+      document.getElementById("auth-title").innerText = isLogin ? "Login" : "Daftar";
+      document.querySelector('#auth button').innerText = isLogin ? "Login" : "Daftar";
+      document.getElementById("auth-message").innerText = "";
+      document.getElementById("auth-username").style.display = isLogin ? "none" : "block";
+    }
+
+    function handleAuth() {
+      const email = document.getElementById("auth-email").value;
+      const password = document.getElementById("auth-password").value;
+      const username = document.getElementById("auth-username").value;
+      const message = document.getElementById("auth-message");
+      let users = JSON.parse(localStorage.getItem("users") || "{}");
+
+      if (!email || !password || (!isLogin && !username)) {
+        message.innerText = "Semua field wajib diisi.";
+        return;
+      }
+
+      if (isLogin) {
+        if (users[email] && users[email].password === password) {
+          localStorage.setItem("loggedIn", "true");
+          localStorage.setItem("userEmail", email);
+          localStorage.setItem("userPassword", password);
+          localStorage.setItem("username", users[email].username);
+          showMainContent();
+        } else {
+          message.innerText = "Email atau password salah.";
+        }
+      } else {
+        if (users[email]) {
+          message.innerText = "Email sudah terdaftar.";
+        } else {
+          users[email] = { password: password, username: username };
+          localStorage.setItem("users", JSON.stringify(users));
+          message.style.color = "green";
+          message.innerText = "Berhasil daftar. Silakan login.";
+          toggleAuth();
+        }
+      }
+    }
+
+    function showMainContent() {
+      document.getElementById("auth").style.display = "none";
+      document.getElementById("main-content").style.display = "block";
+      document.getElementById("galeri").style.display = "block";
+      const username = localStorage.getItem("username");
+      document.getElementById("user-greeting").innerText = `Halo, ${username}!`;
+      checkIfAdmin();
+    }
+
+    function logout() {
+      localStorage.setItem("loggedIn", "false");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userPassword");
+      localStorage.removeItem("username");
+      location.reload();
+    }
+
+    function isAdmin() {
+      const email = localStorage.getItem("userEmail");
+      const password = localStorage.getItem("userPassword");
+      return email === "sandianugrahpratama76@admin.gabut" && password === "6482c38661a3";
+    }
+
+    function checkIfAdmin() {
+      const admin = isAdmin();
+      if (admin) {
+        document.getElementById("user-list-link").style.display = "inline-block";
+        showUserList();
+      }
+      loadMediaFromLocalStorage("images", "gallery-container");
+      loadMediaFromLocalStorage("videos", "video-container");
+      loadMediaFromLocalStorage("audios", "music-container");
+    }
+
+    function showUserList() {
+      const userListElement = document.getElementById("user-list");
+      const users = JSON.parse(localStorage.getItem("users") || "{}");
+      userListElement.innerHTML = "";
+      for (let email in users) {
+        const li = document.createElement("li");
+        li.innerText = `${users[email].username} (${email})`;
+        userListElement.appendChild(li);
+      }
+    }
+
+    function saveMediaToLocalStorage(key, mediaHTML) {
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      const uploader = localStorage.getItem("username") || "Unknown";
+      existing.push({ uploader: uploader, html: mediaHTML });
+      localStorage.setItem(key, JSON.stringify(existing));
+    }
+
+    function loadMediaFromLocalStorage(key, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      const data = JSON.parse(localStorage.getItem(key) || "[]");
+      data.forEach(item => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "media-wrapper";
+        wrapper.innerHTML = item.html;
+        const uploaderInfo = document.createElement("p");
+        uploaderInfo.innerText = `Diunggah oleh: ${item.uploader}`;
+        wrapper.appendChild(uploaderInfo);
+        if (isAdmin()) {
+          const delBtn = document.createElement("button");
+          delBtn.innerText = "Hapus";
+          delBtn.className = "delete-btn";
+          delBtn.onclick = () => deleteFile(delBtn);
+          wrapper.appendChild(delBtn);
+        }
+        container.appendChild(wrapper);
+      });
+    }
+
+    function deleteFile(btn) {
+      const wrapper = btn.parentElement;
+      const parentId = wrapper.parentElement.id;
+      let key = "";
+      if (parentId === "gallery-container") key = "images";
+      else if (parentId === "video-container") key = "videos";
+      else if (parentId === "music-container") key = "audios";
+
+      let data = JSON.parse(localStorage.getItem(key) || "[]");
+      const clone = wrapper.cloneNode(true);
+      clone.querySelector(".delete-btn")?.remove();
+      clone.querySelector("p")?.remove(); // hapus info uploader
+      const contentToDelete = clone.innerHTML.trim();
+      data = data.filter(item => item.html.trim() !== contentToDelete);
+      localStorage.setItem(key, JSON.stringify(data));
+      wrapper.remove();
+    }
+
+    function uploadImage(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "media-wrapper";
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          wrapper.appendChild(img);
+          document.getElementById("gallery-container").appendChild(wrapper);
+          saveMediaToLocalStorage("images", wrapper.innerHTML);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function uploadVideo(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith("video/")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "media-wrapper";
+          wrapper.innerHTML = `<video width="320" height="240" controls><source src="${e.target.result}" type="${file.type}">Browser tidak mendukung tag video.</video>`;
+          document.getElementById("video-container").appendChild(wrapper);
+          saveMediaToLocalStorage("videos", wrapper.innerHTML);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function uploadMusic(event) {
+      const file = event.target.files[0];
+      if (file && file.type.startsWith("audio/")) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "media-wrapper";
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = e.target.result;
+          wrapper.appendChild(audio);
+          document.getElementById("music-container").appendChild(wrapper);
+          saveMediaToLocalStorage("audios", wrapper.innerHTML);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const isLoggedIn = localStorage.getItem("loggedIn") === "true";
+      if (isLoggedIn) showMainContent();
+      const sections = document.querySelectorAll('main section');
+      const links = document.querySelectorAll('nav a');
+      function hideAllSections() {
+        sections.forEach(section => section.style.display = 'none');
+      }
+      links.forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href')?.substring(1);
+          const targetSection = document.getElementById(targetId);
+          hideAllSections();
+          if (targetSection) {
+            targetSection.style.display = 'block';
+            targetSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
